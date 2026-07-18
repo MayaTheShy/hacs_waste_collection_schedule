@@ -118,9 +118,7 @@ class Source:
             zone_date = _first_weekday_of_year(year, zone_weekday)
 
             first_type = FIRST_WEEK_COLLECTION_VALUES[self._first_week_collection]
-            second_type = (
-                "Garbage" if first_type == "Recyclables" else "Recyclables"
-            )
+            second_type = "Garbage" if first_type == "Recyclables" else "Recyclables"
 
             collection_types = [first_type, second_type]
             week_index = 0
