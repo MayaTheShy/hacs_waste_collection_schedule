@@ -54,7 +54,7 @@ PARAM_DESCRIPTIONS = {
     "fr": {
         "zone": "Zone de collecte (A, B, C ou D)",
         "first_week_collection": (
-            "Type de collecte pour le premier jour de zone de l'année: recycling ou garbage"
+            "Type de collecte pour le premier jour de zone de l'année: recycling (recyclage) ou garbage (déchets)"
         ),
     },
 }
