@@ -48,13 +48,13 @@ PARAM_DESCRIPTIONS = {
     "en": {
         "zone": "Collection zone (A, B, C, or D)",
         "first_week_collection": (
-            "Collection type for the first zone day of the year: recycling or garbage"
+            "Collection type for the first occurrence of the zone weekday each year (sets alternating pattern): recycling or garbage"
         ),
     },
     "fr": {
         "zone": "Zone de collecte (A, B, C ou D)",
         "first_week_collection": (
-            "Type de collecte pour le premier jour de zone de l'année: recycling (recyclage) ou garbage (déchets)"
+            "Type de collecte pour la première occurrence hebdomadaire de la zone chaque année : « recycling » (recyclage) ou « garbage » (déchets)"
         ),
     },
 }
@@ -101,40 +101,28 @@ class Source:
 
         for year in range(start_year, end_year + 1):
             # Brown bin: weekly Monday for all zones
-            compost_date = _first_weekday_of_year(year, 0)
-            while compost_date.year == year:
-                if compost_date >= today:
-                    entries.append(
-                        Collection(
-                            date=compost_date,
-                            t="Compost",
-                            icon=ICON_MAP["Compost"],
-                        )
-                    )
-                compost_date += datetime.timedelta(days=7)
+            entries.extend(
+                _generate_weekly_collections(
+                    year=year,
+                    weekday=0,
+                    collection_type="Compost",
+                    icon=ICON_MAP["Compost"],
+                    start_date=today,
+                )
+            )
 
             # Blue/black bins: weekly on zone day, alternating by week
             zone_weekday = ZONE_WEEKDAY[self._zone]
-            zone_date = _first_weekday_of_year(year, zone_weekday)
-
             first_type = FIRST_WEEK_COLLECTION_VALUES[self._first_week_collection]
             second_type = "Garbage" if first_type == "Recyclables" else "Recyclables"
-
-            collection_types = [first_type, second_type]
-            week_index = 0
-            while zone_date.year == year:
-                if zone_date >= today:
-                    collection_type = collection_types[week_index % 2]
-                    entries.append(
-                        Collection(
-                            date=zone_date,
-                            t=collection_type,
-                            icon=ICON_MAP[collection_type],
-                        )
-                    )
-
-                zone_date += datetime.timedelta(days=7)
-                week_index += 1
+            entries.extend(
+                _generate_alternating_collections(
+                    year=year,
+                    weekday=zone_weekday,
+                    collection_types=[first_type, second_type],
+                    start_date=today,
+                )
+            )
 
         return sorted(entries, key=lambda entry: (entry.date, entry.t))
 
@@ -142,3 +130,45 @@ class Source:
 def _first_weekday_of_year(year: int, weekday: int) -> datetime.date:
     date = datetime.date(year, 1, 1)
     return date + datetime.timedelta(days=(weekday - date.weekday()) % 7)
+
+
+def _generate_weekly_collections(
+    year: int,
+    weekday: int,
+    collection_type: str,
+    icon: str,
+    start_date: datetime.date,
+) -> list[Collection]:
+    entries = []
+    collection_date = _first_weekday_of_year(year, weekday)
+    while collection_date.year == year:
+        if collection_date >= start_date:
+            entries.append(
+                Collection(date=collection_date, t=collection_type, icon=icon)
+            )
+        collection_date += datetime.timedelta(days=7)
+    return entries
+
+
+def _generate_alternating_collections(
+    year: int,
+    weekday: int,
+    collection_types: list[str],
+    start_date: datetime.date,
+) -> list[Collection]:
+    entries = []
+    collection_date = _first_weekday_of_year(year, weekday)
+    week_index = 0
+    while collection_date.year == year:
+        if collection_date >= start_date:
+            collection_type = collection_types[week_index % len(collection_types)]
+            entries.append(
+                Collection(
+                    date=collection_date,
+                    t=collection_type,
+                    icon=ICON_MAP[collection_type],
+                )
+            )
+        collection_date += datetime.timedelta(days=7)
+        week_index += 1
+    return entries
