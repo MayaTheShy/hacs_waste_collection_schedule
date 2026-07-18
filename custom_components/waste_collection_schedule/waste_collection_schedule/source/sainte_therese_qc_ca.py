@@ -157,10 +157,11 @@ def _generate_alternating_collections(
     start_date: datetime.date,
 ) -> list[Collection]:
     entries = []
-    collection_date = _first_weekday_of_year(year, weekday)
-    week_index = 0
+    first_collection_date = _first_weekday_of_year(year, weekday)
+    collection_date = first_collection_date
     while collection_date.year == year:
         if collection_date >= start_date:
+            week_index = (collection_date - first_collection_date).days // 7
             collection_type = collection_types[week_index % len(collection_types)]
             entries.append(
                 Collection(
@@ -170,5 +171,4 @@ def _generate_alternating_collections(
                 )
             )
         collection_date += datetime.timedelta(days=7)
-        week_index += 1
     return entries
